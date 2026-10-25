@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Ink Monsters</title>
+<meta name="description" content="Draw a monster, watch it come alive, and fight.">
+<meta name="theme-color" content="#f3eee4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ink Monsters">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-close" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 20 20"><path d="M12.5 4L6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 20 20"><path d="M7 5L3.5 8.5 7 12M4 8.5h7.5a4.5 4.5 0 010 9H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-share" viewBox="0 0 20 20"><path d="M10 2.5v10M6 6l4-3.5L14 6M4 10.5v6.5h12v-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 20 20"><path d="M3 7.5h3l4.5-3.5v12L6 12.5H3z" fill="currentColor"/><path d="M13.5 7a4 4 0 010 6M15.5 4.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 20 20"><path d="M3 7.5h3l4.5-3.5v12L6 12.5H3z" fill="currentColor"/><path d="M13.5 7.5l5 5M18.5 7.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</svg>
+
+<section id="home" class="screen">
+  <div class="home-main">
+    <header class="top">
+      <h1 class="logo">Ink<br>Monsters</h1>
+      <button id="muteBtn" class="icon-btn" aria-label="Sound on"><svg><use href="#i-sound"/></svg></button>
+    </header>
+    <div class="stage-wrap"><canvas id="homeStage"></canvas></div>
+    <button id="drawBtn" class="btn btn-primary btn-big">Draw a monster</button>
+  </div>
+  <div class="home-lists">
+    <div id="mineBlock">
+      <h2 class="list-title">Your monsters</h2>
+      <ul id="mineList" class="mlist"></ul>
+    </div>
+    <h2 class="list-title">Challengers</h2>
+    <ul id="rivalList" class="mlist"></ul>
+  </div>
+</section>
+
+<section id="draw" class="screen" hidden>
+  <header class="bar">
+    <button id="drawClose" class="icon-btn" aria-label="Back"><svg><use href="#i-close"/></svg></button>
+    <ol class="steps" id="steps">
+      <li data-step="body"><span>1</span>Body</li>
+      <li data-step="legs"><span>2</span>Legs</li>
+      <li data-step="eyes"><span>3</span>Eyes</li>
+    </ol>
+    <button id="undoBtn" class="icon-btn" aria-label="Undo"><svg><use href="#i-undo"/></svg></button>
+  </header>
+  <div class="pad-wrap" id="padWrap"><canvas id="drawCanvas"></canvas></div>
+  <p id="drawHint" class="hint"></p>
+  <div id="tintRow" class="tints" hidden></div>
+  <button id="nextBtn" class="btn btn-primary btn-big">Next: legs</button>
+</section>
+
+<section id="reveal" class="screen" hidden>
+  <header class="bar">
+    <button id="revealBack" class="icon-btn" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+    <span class="bar-title" id="revealTitle">No. 001</span>
+    <button id="shareBtn" class="icon-btn" aria-label="Share"><svg><use href="#i-share"/></svg></button>
+  </header>
+  <div class="reveal-body">
+    <div>
+      <p class="kicker" id="revealKicker" hidden>A challenger appears</p>
+      <div class="stage-wrap"><canvas id="revealStage"></canvas></div>
+    </div>
+    <div class="card">
+      <input id="nameInput" class="name-input" maxlength="16" spellcheck="false" autocomplete="off" aria-label="Name">
+      <p class="move" id="moveName"></p>
+      <div class="stats">
+        <div class="stat"><span>HP</span><b id="statHp"></b><i><em id="barHp"></em></i></div>
+        <div class="stat"><span>POW</span><b id="statPow"></b><i><em id="barPow"></em></i></div>
+        <div class="stat"><span>SPD</span><b id="statSpd"></b><i><em id="barSpd"></em></i></div>
+      </div>
+      <p class="why" id="whyText"></p>
+      <p class="record" id="recordText"></p>
+      <button id="fightBtn" class="btn btn-primary btn-big">Fight</button>
+      <button id="deleteBtn" class="btn btn-quiet">Delete</button>
+    </div>
+  </div>
+</section>
+
+<section id="pick" class="screen" hidden>
+  <header class="bar">
+    <button id="pickBack" class="icon-btn" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+    <span class="bar-title" id="pickTitle">Pick an opponent</span>
+    <span class="icon-btn" aria-hidden="true"></span>
+  </header>
+  <ul id="pickList" class="mlist"></ul>
+</section>
+
+<section id="battle" class="screen" hidden>
+  <header class="bar battle-bar">
+    <button id="battleQuit" class="icon-btn" aria-label="Leave fight"><svg><use href="#i-close"/></svg></button>
+    <div class="plates">
+      <div class="plate" id="plateA"><span class="pname"></span><span class="php"></span><i><em></em></i></div>
+      <div class="plate right" id="plateB"><span class="pname"></span><span class="php"></span><i><em></em></i></div>
+    </div>
+  </header>
+  <div class="arena-wrap" id="arenaWrap"><canvas id="arena"></canvas><div id="stamp" class="stamp"></div></div>
+  <div class="action" id="actionPad">
+    <p id="actionText" class="action-text">Get ready</p>
+    <div class="meter" id="meter"><div class="zone good" id="zoneGood"></div><div class="zone crit" id="zoneCrit"></div><div class="needle" id="needle"></div></div>
+    <button id="actionBtn" class="btn btn-primary btn-big" tabindex="-1">Strike</button>
+  </div>
+  <div class="result" id="result" hidden>
+    <p class="result-title" id="resultTitle"></p>
+    <p class="result-sub" id="resultSub"></p>
+    <button id="rematchBtn" class="btn btn-primary btn-big">Rematch</button>
+    <div class="result-row">
+      <button id="otherBtn" class="btn btn-small">New opponent</button>
+      <button id="resultHome" class="btn btn-small">Done</button>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
