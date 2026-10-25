@@ -1,6 +1,6 @@
 import { clamp, ease, hashData, lerp, monsterName, simplify, strokeLen } from './geom.js';
 import { INK, SIGNAL, autoEyes, drawMonster, makeMonster, moveName, normalize } from './monster.js';
-import { ELEMENTS, ELEMENT_KEYS, EVO_LEVELS, LIMB_KEYS, MAX_LEVEL, MOVES, PARTS, PART_ORDER, PATTERNS, TINTS, matchup, xpToNext } from './parts.js';
+import { BOSS_DMG, BOSS_HP, ELEMENTS, ELEMENT_KEYS, EVO_LEVELS, LIMB_KEYS, MAX_LEVEL, MOVES, PARTS, PART_ORDER, PATTERNS, TINTS, matchup, xpToNext } from './parts.js';
 import { cry, isMuted, setMuted, sfx, unlock } from './audio.js';
 import { decodeMonster, encodeMonster } from './codec.js';
 import { generate, houseMonsters } from './gen.js';
@@ -26,7 +26,7 @@ setMuted(!!store.muted);
 
 const cache = new Map();
 function mon(d) {
-  const sig = `${d.id}|${d.lvl}|${d.evo}|${d.ink}|${d.tint}|${d.pattern}|${d.body.length}|${d.legs.length}|${d.eyes.length}|${LIMB_KEYS.map((k) => (d.parts?.[k] || []).length).join('')}`;
+  const sig = `${d.id}|${d.lvl}|${d.evo}|${d.ink}|${d.tint}|${d.pattern}|${(d.loadout || []).join(',')}|${d.body.length}|${d.legs.length}|${d.eyes.length}|${LIMB_KEYS.map((k) => (d.parts?.[k] || []).length).join('')}`;
   let m = cache.get(d.id);
   if (!m || m.data !== d || m.sig !== sig) { m = makeMonster(d); m.faceSign = faceSign(m); m.sig = sig; cache.set(d.id, m); }
   return m;
@@ -75,11 +75,11 @@ function stamp(text, kind) {
   sfx('stamp');
 }
 
-function thumb(cv, d, size = 60) {
+function thumb(cv, d, size = 60, fill = 1) {
   const m = mon(d);
   const g = fit(cv, size, size);
   const st = { x: size / 2, gy: 0, y: 0, face: m.faceSign, sqx: 0, sqy: 0, rot: 0, tilt: 0, phase: 0, walk: 0, flash: 0, ko: 0, t: 0, blink: 0, punch: 0, mouth: 0, flap: 0, stun: 0, lookX: m.faceSign, eyes: [] };
-  const s = (size - 8) / Math.max(m.full.w, m.groundY - m.full.y);
+  const s = ((size - 8) * fill) / Math.max(m.full.w, m.groundY - m.full.y);
   st.gy = size / 2 + ((m.groundY - m.full.y) * s) / 2;
   drawMonster(g, m, st, s);
 }
@@ -508,13 +508,16 @@ function finishDraw() {
 
 function finishEvolve() {
   const d = D.base;
-  const before = { ...mon(d).stats };
+  const old = mon(d);
+  const before = { ...old.stats }, knew = old.partMoves.slice();
   const n = deepCopy(D.data);
   Object.assign(d, { body: n.body, legs: n.legs, eyes: n.eyes, parts: n.parts, ink: n.ink, tint: n.tint, pattern: n.pattern });
   d.evo += 1;
   cache.delete(d.id);
+  const learned = mon(d).partMoves.filter((k) => !knew.includes(k));
+  if (Array.isArray(d.loadout)) for (const k of learned) if (d.loadout.length < 3) d.loadout.push(k);
   save();
-  openMon(d, 'evolved', { before });
+  openMon(d, 'evolved', { before, learned });
 }
 
 // ---------- monster page ----------
@@ -539,27 +542,20 @@ function openMon(d, mode, ctx = {}) {
   $('monXpWrap').hidden = !own;
   const xpEl = $('monXp');
   xpEl.style.width = d.lvl >= MAX_LEVEL ? '100%' : `${Math.round((d.xp / xpToNext(d.lvl)) * 100)}%`;
-  const hpShown = d.boss ? Math.round(m.stats.hp * 1.25) : m.stats.hp;
+  const hpShown = d.boss ? Math.round(m.stats.hp * BOSS_HP) : m.stats.hp;
   $('statHp').textContent = hpShown; $('statPow').textContent = m.stats.pow; $('statSpd').textContent = m.stats.spd;
   const maxes = { hp: Math.max(160, hpShown), pow: Math.max(60, m.stats.pow), spd: Math.max(100, m.stats.spd) };
   for (const [id, v, max] of [['barHp', hpShown, maxes.hp], ['barPow', m.stats.pow, maxes.pow], ['barSpd', m.stats.spd, maxes.spd]]) {
     const el = $(id); el.style.transition = 'none'; el.style.width = '0%';
     requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = ''; el.style.width = `${Math.round((v / max) * 100)}%`; }));
   }
-  const ml = $('monMoves'); ml.textContent = '';
-  for (const k of m.moves) {
-    const li = document.createElement('li');
-    const mv = MOVES[k];
-    const tagTxt = mv.power ? `x${(mv.power * (mv.hits || 1)).toFixed(1)}${mv.cd ? ` · every ${mv.cd + 1}` : ''}` : `every ${mv.cd + 1}`;
-    li.innerHTML = `<b></b><small>${tagTxt}</small><span></span>`;
-    li.querySelector('b').textContent = moveName(m, k);
-    li.querySelector('span').textContent = mv.desc;
-    ml.append(li);
-  }
+  renderMoves(d, m, own);
   let why = m.why.join(' ');
   if (mode === 'evolved' && ctx.before) {
     const s = m.stats, b = ctx.before;
-    why = `HP ${b.hp} → ${s.hp}, POW ${b.pow} → ${s.pow}, SPD ${b.spd} → ${s.spd}. ` + why;
+    const names = (ctx.learned || []).map((k) => MOVES[k].name);
+    const learnedTxt = names.length ? `Learned ${names.join(' and ')}${m.moves.some((k) => ctx.learned.includes(k)) ? '.' : '. Tap it above to equip.'} ` : '';
+    why = `${learnedTxt}HP ${b.hp} → ${s.hp}, POW ${b.pow} → ${s.pow}, SPD ${b.spd} → ${s.spd}. ` + why;
   }
   $('whyText').textContent = why;
   $('recordText').textContent = own && (d.w || d.l) ? `${d.w} win${d.w === 1 ? '' : 's'}, ${d.l} loss${d.l === 1 ? '' : 'es'}` : '';
@@ -602,6 +598,45 @@ function openMon(d, mode, ctx = {}) {
     cry(m); a.st.mouth = 1;
     hop(a, fresh ? 1.6 : 1);
   })();
+}
+
+// with more than 3 part moves, your own monster's list lets you choose which 3 to bring
+function renderMoves(d, m, own) {
+  const ml = $('monMoves'); ml.textContent = '';
+  const swap = own && m.partMoves.length > 3;
+  const list = swap ? [m.basic, ...m.partMoves, ...(m.moves.includes('inkup') ? ['inkup'] : [])] : m.moves;
+  for (const k of list) {
+    const li = document.createElement('li');
+    const mv = MOVES[k];
+    const isPart = m.partMoves.includes(k);
+    const on = m.moves.includes(k);
+    const tagTxt = swap && isPart ? (on ? 'Equipped' : 'Tap to equip')
+      : mv.power ? `x${(mv.power * (mv.hits || 1)).toFixed(1)}${mv.cd ? ` · every ${mv.cd + 1}` : ''}` : `every ${mv.cd + 1}`;
+    li.innerHTML = `<b></b><small class="${swap && isPart ? 'slot' : ''}">${tagTxt}</small><span></span>`;
+    li.querySelector('b').textContent = moveName(m, k);
+    li.querySelector('span').textContent = mv.desc;
+    if (swap && isPart) {
+      li.classList.add('swappable', on ? 'equipped' : 'benched');
+      li.addEventListener('click', () => {
+        const cur = m.equipped.slice();
+        if (on) {
+          if (cur.length <= 1) { toast('Keep at least one part move'); sfx('deny'); return; }
+          d.loadout = cur.filter((x) => x !== k);
+        } else {
+          if (cur.length >= 3) { toast('3 part moves max. Tap one to take it off first.'); sfx('deny'); return; }
+          d.loadout = [...cur, k];
+        }
+        sfx('select'); save();
+        const m2 = mon(d);
+        renderMoves(d, m2, own);
+      });
+    }
+    ml.append(li);
+  }
+  let note = ml.nextElementSibling;
+  if (!note || !note.classList.contains('moves-note')) { note = document.createElement('p'); note.className = 'moves-note'; ml.after(note); }
+  note.textContent = swap ? `It knows ${m.partMoves.length} part moves and brings 3. Tap to swap. An empty slot becomes Ink Up.` : '';
+  note.hidden = !swap;
 }
 
 $('nameInput').addEventListener('input', (e) => {
@@ -659,7 +694,7 @@ function openMap() {
       n.setAttribute('aria-label', can ? `${foe.name}, level ${foe.lvl}` : 'Locked');
       n.innerHTML = `<span class="disc"></span><span class="lv">${can ? `LV ${foe.lvl}` : i === 4 ? 'Boss' : '&nbsp;'}</span><span class="nstars">${[0, 1, 2].map((k) => `<svg class="${k < st ? 'got' : ''}"><use href="#i-star"/></svg>`).join('')}</span>`;
       const disc = n.querySelector('.disc');
-      if (can) { const cv = document.createElement('canvas'); disc.append(cv); thumb(cv, foe, window.innerWidth >= 900 ? 72 : 56); }
+      if (can) { const cv = document.createElement('canvas'); disc.append(cv); thumb(cv, foe, window.innerWidth >= 900 ? 72 : 56, 0.78); }
       else disc.innerHTML = '<svg><use href="#i-lock"/></svg>';
       n.addEventListener('click', () => { unlock(); sfx('tap'); openMon(foe, 'foe', { ch, i }); });
       path.append(n);
@@ -752,19 +787,19 @@ function startBattle(pd, od, opts) {
   tag.hidden = opts.mode === 'quick';
   tag.textContent = opts.mode === 'adv' ? `${CHAPTERS[opts.ch].name} · ${opts.i === 4 ? 'Boss' : `fight ${opts.i + 1} of 5`}` : opts.mode === 'gauntlet' ? `Gauntlet · round ${opts.run.round}` : '';
   const w = wrapWidth($('arenaWrap'));
-  const h = Math.round(clamp(Math.min(w * 1.05, window.innerHeight - 380), 220, 520));
+  const h = Math.round(clamp(Math.min(w * 1.4, window.innerHeight - 385), 220, 520));
   const theme = opts.mode === 'adv' ? CHAPTERS[opts.ch].theme : opts.theme || THEMES[Math.floor(Math.random() * THEMES.length)];
   arena.reset();
   arena.resize(w, h, 0.8, theme);
   const P = mon(pd), O = mon(od);
-  const s = arena.scaleFor([P, O], 0.36, 0.5);
+  const s = arena.scaleFor([P, O], 0.42, 0.58);
   const pa = arena.add(P, -w * 0.3, P.faceSign);
   const oa = arena.add(O, w * 1.3, -O.faceSign);
   pa.s = oa.s = s;
   pa.home = w * 0.27; oa.home = w * 0.73;
   pa.st.lookX = 1; oa.st.lookX = -1;
   const fighter = (d, a, m, hp) => {
-    const max = Math.round(m.stats.hp * (d.boss ? 1.25 : 1));
+    const max = Math.round(m.stats.hp * (d.boss ? BOSS_HP : 1));
     return { d, a, mon: m, max, hp: hp ?? max, cd: {}, bleed: 0, stun: 0, weak: 0, fly: false, boost: false };
   };
   const b = { pd, od, opts, P: fighter(pd, pa, P, opts.run ? opts.run.hp : undefined), O: fighter(od, oa, O) };
@@ -856,8 +891,7 @@ function chooseMove(b, f) {
       const wait2 = f.cd[k] || 0;
       btn.className = k === f.mon.basic ? 'basic' : '';
       btn.disabled = wait2 > 0;
-      const eff = mv.power ? matchup(f.d.ink, b.O.d.ink) : 1;
-      const sub = wait2 > 0 ? `Ready in ${wait2} turn${wait2 > 1 ? 's' : ''}` : mv.desc + (eff > 1 ? ' Super effective.' : eff < 1 ? ' Not very effective.' : '');
+      const sub = wait2 > 0 ? `Ready in ${wait2} turn${wait2 > 1 ? 's' : ''}` : mv.desc;
       btn.innerHTML = '<b></b><small></small>';
       btn.querySelector('b').textContent = moveName(f.mon, k);
       btn.querySelector('small').textContent = sub;
@@ -985,7 +1019,7 @@ async function turn(b, att, def) {
 
   const el = matchup(att.d.ink, def.d.ink);
   const per = att.mon.stats.pow * mv.power * atkMult * defMult * el
-    * (att.d.ink === 'fire' ? 1.1 : 1) * (att.weak > 0 ? 0.7 : 1) * (att.boost ? 1.3 : 1) * (att.d.boss ? 1.08 : 1);
+    * (att.d.ink === 'fire' ? 1.1 : 1) * (att.weak > 0 ? 0.7 : 1) * (att.boost ? 1.3 : 1) * (att.d.boss ? BOSS_DMG : 1);
   att.boost = false;
   const dodge = def.fly;
   // stun lands on strong timing: your crit always, a good hit half the time; their hits when you fail to block
@@ -1376,7 +1410,7 @@ window.addEventListener('hashchange', () => { if (location.hash.startsWith('#m='
 for (const ev of ['touchend', 'click', 'keydown']) document.addEventListener(ev, unlock, { passive: true });
 
 window.__ink = {
-  store, mon, opponent, get B() { return B; }, get screen() { return screen; }, get part() { return D.part; }, get drawing() { return D.data; },
+  store, mon, opponent, get B() { return B; }, get screen() { return screen; }, get part() { return D.part; }, get drawing() { return D.data; }, get drawState() { return { active: D.active, cur: D.cur && D.cur.length, history: D.history.slice() }; },
   grant(n) { setDrops(store.drops + n); },
 };
 

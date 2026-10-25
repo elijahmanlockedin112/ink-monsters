@@ -262,7 +262,7 @@ try {
   await tool('tail');
   await stroke([[260, 540], [180, 560], [120, 520], [100, 460]]);
   await tool('wings');
-  await stroke([[420, 300], [380, 180], [300, 160], [330, 260], [420, 300]]);
+  await stroke([[420, 300], [380, 180], [300, 160], [330, 260], [420, 300]]); // a wing that closes on its own start
   await tool('legs');
   await stroke(line(500, 640, 500, 800));
   await stroke(line(560, 640, 580, 800)); // a 4th new part: should be refused

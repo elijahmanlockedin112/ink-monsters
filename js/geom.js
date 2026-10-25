@@ -10,7 +10,10 @@ export const ease = {
 };
 
 export function rng(seed) {
-  let s = seed >>> 0 || 1;
+  // scramble the seed first: plain xorshift gives nearly the same first numbers for nearby seeds
+  let s = Math.imul((seed >>> 0) ^ 0x9e3779b9, 0x85ebca6b) >>> 0;
+  s = Math.imul(s ^ (s >>> 13), 0xc2b2ae35) >>> 0;
+  s = (s ^ (s >>> 16)) >>> 0 || 1;
   return () => {
     s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
     return (s >>> 0) / 4294967296;
@@ -42,6 +45,13 @@ export function bbox(strokes) {
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
 }
 
+// distance from p to the segment a-b (a closed loop has a == b, which must still keep its far points)
+function segDist(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy;
+  const t = L2 ? clamp(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2, 0, 1) : 0;
+  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+}
+
 // Ramer-Douglas-Peucker on [x, y, w] points.
 export function simplify(pts, eps) {
   if (pts.length < 3) return pts.slice();
@@ -50,11 +60,9 @@ export function simplify(pts, eps) {
   const stack = [[0, pts.length - 1]];
   while (stack.length) {
     const [a, b] = stack.pop();
-    const [ax, ay] = pts[a], [bx, by] = pts[b];
-    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
     let best = -1, bi = -1;
     for (let i = a + 1; i < b; i++) {
-      const d = Math.abs((pts[i][0] - ax) * dy - (pts[i][1] - ay) * dx) / len;
+      const d = segDist(pts[i], pts[a], pts[b]);
       if (d > best) { best = d; bi = i; }
     }
     if (best > eps) { keep[bi] = 1; stack.push([a, bi], [bi, b]); }

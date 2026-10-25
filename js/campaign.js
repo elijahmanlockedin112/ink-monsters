@@ -5,10 +5,10 @@ import { ELEMENT_KEYS } from './parts.js';
 
 export const CHAPTERS = [
   { name: 'Doodle Meadow', theme: 'meadow', elements: ['neutral', 'leaf'], levels: [1, 2, 3, 4], boss: { level: 5, title: 'the Scribbler', shape: 'blob' }, ai: 0 },
-  { name: 'Inkwell Caves', theme: 'caves', elements: ['water', 'neutral'], levels: [5, 6, 7, 8], boss: { level: 10, title: 'the Drip', shape: 'tall' }, ai: 1 },
-  { name: 'Margin Woods', theme: 'woods', elements: ['leaf', 'water'], levels: [9, 10, 11, 12], boss: { level: 14, title: 'Old Bark', shape: 'box' }, ai: 2 },
-  { name: 'Redline Volcano', theme: 'volcano', elements: ['fire', 'leaf'], levels: [13, 14, 15, 16], boss: { level: 18, title: 'the Smudge', shape: 'spiky' }, ai: 3 },
-  { name: 'The Blank Page', theme: 'page', elements: ELEMENT_KEYS, levels: [17, 18, 19, 20], boss: { level: 23, title: 'the Eraser', shape: 'cloud' }, ai: 4 },
+  { name: 'Inkwell Caves', theme: 'caves', elements: ['water', 'neutral'], levels: [4, 5, 6, 7], boss: { level: 8, title: 'the Drip', shape: 'tall' }, ai: 1 },
+  { name: 'Margin Woods', theme: 'woods', elements: ['leaf', 'water'], levels: [8, 9, 10, 11], boss: { level: 12, title: 'Old Bark', shape: 'box' }, ai: 2 },
+  { name: 'Redline Volcano', theme: 'volcano', elements: ['fire', 'leaf'], levels: [12, 13, 13, 14], boss: { level: 15, title: 'the Smudge', shape: 'spiky' }, ai: 2 },
+  { name: 'The Blank Page', theme: 'page', elements: ELEMENT_KEYS, levels: [16, 17, 18, 19], boss: { level: 21, title: 'the Eraser', shape: 'cloud' }, ai: 4 },
 ];
 
 const cache = new Map();

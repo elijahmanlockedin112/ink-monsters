@@ -24,8 +24,8 @@ export const ELEMENT_KEYS = ['neutral', 'fire', 'water', 'leaf'];
 
 const BEATS = { fire: 'leaf', leaf: 'water', water: 'fire' };
 export function matchup(att, def) {
-  if (BEATS[att] === def) return 1.4;
-  if (BEATS[def] === att) return 0.75;
+  if (BEATS[att] === def) return 1.25;
+  if (BEATS[def] === att) return 0.8;
   return 1;
 }
 
@@ -58,6 +58,10 @@ export const PATTERNS = [
   { key: 'scales', label: 'Scales', price: 90 },
   { key: 'stars', label: 'Stars', price: 120 },
 ];
+
+// bosses get a little extra on top of their bigger drawing (tuned with test/balance.mjs)
+export const BOSS_HP = 1.12;
+export const BOSS_DMG = 1.04;
 
 // levels at which a monster may evolve (draw new parts onto itself)
 export const EVO_LEVELS = [3, 6, 10, 15];

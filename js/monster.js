@@ -184,6 +184,8 @@ export function makeMonster(d) {
   const legPower = legs.length ? clamp(Math.pow(legs.length, 0.6) * (avgLeg / Math.max(bb.h, 120)) * 0.75, 0.1, 1) : 0;
   const base = baseStats(size, spike, legPower, parts);
   const stats = scaledStats(base, d.lvl, d.evo);
+  // computer-drawn opponents can't out-spike their level; very spiky ones made single walls in the Adventure
+  if (d.gen) stats.pow = Math.min(stats.pow, scaledStats({ hp: 0, pow: 27, spd: 0 }, d.lvl, d.evo).pow);
   const { wH, wP, wS } = base.w;
 
   let basic;
@@ -203,7 +205,10 @@ export function makeMonster(d) {
   if (parts.tail.length) partMoves.push('sweep');
   if (parts.wings.length) partMoves.push('fly');
   if (d.eyes.length >= 3) partMoves.push('glare');
-  const moves = [basic, ...partMoves.slice(0, 3)];
+  // the owner picks which 3 part moves to bring; until then it's the first 3
+  const chosen = Array.isArray(d.loadout) ? d.loadout.filter((k) => partMoves.includes(k)).slice(0, 3) : null;
+  const equipped = chosen || partMoves.slice(0, 3);
+  const moves = [basic, ...equipped];
   if (moves.length < 4) moves.push('inkup');
 
   const focus = (1 + 0.1 * Math.min(4, Math.max(0, d.eyes.length - 1))) * (d.ink === 'neutral' ? 1.25 : 1);
@@ -214,7 +219,6 @@ export function makeMonster(d) {
   const n = legs.length, legWord = `${n} leg${n > 1 ? 's' : ''}`;
   why.push(!n ? 'No legs, so it rolls.' : base.spd >= 45 ? `${legWord}, quick on its feet.` : base.spd <= 30 ? `${legWord}, but short ones. Slow.` : `${legWord}, steady speed.`);
   if (d.eyes.length >= 2) why.push(`${d.eyes.length} eyes make crits easier.`);
-  if (partMoves.length > 3) why.push('Only 3 part moves fit, the rest still add stats.');
 
   // limbs swing in alternating pairs, front to back
   const rig = (list, spread) => {
@@ -229,7 +233,7 @@ export function makeMonster(d) {
     data: d, tint, ink: ELEMENTS[d.ink].color, element: d.ink, sil, bb, full, groundY, cx: full.cx, seed,
     legs: rig(legs, 0.7), arms: rig(parts.arms, 0.9), wings: rig(parts.wings, 0.4), tail: rig(parts.tail, 1.1),
     horns: parts.horns, mouth: parts.mouth, mouthBox,
-    stats, base, moves, basic, basicName: `${adj} ${MOVES[basic].name}`, focus, why,
+    stats, base, moves, partMoves, equipped, basic, basicName: `${adj} ${MOVES[basic].name}`, focus, why,
     size, spike, legPower,
   };
 }
