@@ -1,6 +1,7 @@
-// Packs a monster drawing into a short URL-safe string (deflated when the browser can) and back.
+// Packs a monster into a short URL-safe string (deflated when the browser can) and back.
+import { ELEMENT_KEYS, LIMB_KEYS, PATTERNS } from './parts.js';
 
-const MAX_STROKES = 200, MAX_POINTS = 6000;
+const MAX_STROKES = 200, MAX_POINTS = 8000;
 
 function b64url(bytes) {
   let s = '';
@@ -23,10 +24,14 @@ export async function encodeMonster(d) {
   const out = [];
   const u8 = (v) => out.push(v & 255);
   const u16 = (v) => { v = Math.max(0, Math.min(65535, Math.round(v))); out.push(v >> 8, v & 255); };
-  const name = new TextEncoder().encode((d.name || '').slice(0, 24));
-  u8(1); u8(name.length); name.forEach(u8); u8(d.tint || 0);
+  const name = new TextEncoder().encode((d.name || '').slice(0, 26));
+  u8(2); u8(name.length); name.forEach(u8); u8(d.tint || 0);
+  u8(Math.max(0, ELEMENT_KEYS.indexOf(d.ink)));
+  u8(Math.max(0, PATTERNS.findIndex((p) => p.key === d.pattern)));
+  u8(Math.min(99, d.lvl || 1)); u8(Math.min(9, d.evo || 0));
   u8(d.eyes.length); for (const e of d.eyes) { u16(e.x); u16(e.y); u8(e.r); }
-  for (const list of [d.body, d.legs]) {
+  const lists = [d.body, d.legs, ...LIMB_KEYS.map((k) => (d.parts && d.parts[k]) || [])];
+  for (const list of lists) {
     u8(list.length);
     for (const s of list) { u16(s.length); for (const p of s) { u16(p[0]); u16(p[1]); u8(Math.round(p[2] * 4)); } }
   }
@@ -45,15 +50,23 @@ export async function decodeMonster(code) {
   const need = (n) => { if (i + n > bytes.length) throw new Error('short'); };
   const u8 = () => { need(1); return bytes[i++]; };
   const u16 = () => { need(2); const v = (bytes[i] << 8) | bytes[i + 1]; i += 2; return v; };
-  if (u8() !== 1) throw new Error('version');
+  const ver = u8();
+  if (ver !== 1 && ver !== 2) throw new Error('version');
   const nl = u8(); need(nl);
   const name = new TextDecoder().decode(bytes.slice(i, i + nl)); i += nl;
   const tint = u8();
+  let ink = 'neutral', pattern = 'plain', lvl = 1, evo = 0;
+  if (ver === 2) {
+    ink = ELEMENT_KEYS[u8()] || 'neutral';
+    pattern = (PATTERNS[u8()] || PATTERNS[0]).key;
+    lvl = Math.max(1, u8()); evo = u8();
+  }
   const eyes = [];
   for (let n = u8(); n > 0; n--) eyes.push({ x: u16(), y: u16(), r: u8() });
   let points = 0;
   const lists = [];
-  for (let k = 0; k < 2; k++) {
+  const nLists = ver === 2 ? 2 + LIMB_KEYS.length : 2;
+  for (let k = 0; k < nLists; k++) {
     const list = [];
     const ns = u8();
     if (ns > MAX_STROKES) throw new Error('too many strokes');
@@ -68,5 +81,7 @@ export async function decodeMonster(code) {
     lists.push(list);
   }
   if (!lists[0].length) throw new Error('no body');
-  return { name, tint, eyes: eyes.slice(0, 8), body: lists[0], legs: lists[1].slice(0, 8) };
+  const parts = {};
+  LIMB_KEYS.forEach((k, j) => { parts[k] = (lists[2 + j] || []).slice(0, 8); });
+  return { name, tint, ink, pattern, lvl: Math.min(lvl, 25), evo: Math.min(evo, 4), eyes: eyes.slice(0, 8), body: lists[0], legs: lists[1].slice(0, 8), parts };
 }

@@ -23,68 +23,114 @@
   <symbol id="i-share" viewBox="0 0 20 20"><path d="M10 2.5v10M6 6l4-3.5L14 6M4 10.5v6.5h12v-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-sound" viewBox="0 0 20 20"><path d="M3 7.5h3l4.5-3.5v12L6 12.5H3z" fill="currentColor"/><path d="M13.5 7a4 4 0 010 6M15.5 4.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-mute" viewBox="0 0 20 20"><path d="M3 7.5h3l4.5-3.5v12L6 12.5H3z" fill="currentColor"/><path d="M13.5 7.5l5 5M18.5 7.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-drop" viewBox="0 0 20 20"><path d="M10 2.5C7.5 6.5 5 9.2 5 12.3A5 5 0 0015 12.3C15 9.2 12.5 6.5 10 2.5z" fill="currentColor"/></symbol>
+  <symbol id="i-star" viewBox="0 0 20 20"><path d="M10 2.2l2.4 5 5.4.7-4 3.8 1 5.4L10 14.5l-4.8 2.6 1-5.4-4-3.8 5.4-.7z" fill="currentColor"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 20 20"><rect x="4.5" y="9" width="11" height="8" rx="1.5" fill="currentColor"/><path d="M7 9V6.5a3 3 0 016 0V9" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
 </svg>
 
 <section id="home" class="screen">
   <div class="home-main">
     <header class="top">
       <h1 class="logo">Ink<br>Monsters</h1>
-      <button id="muteBtn" class="icon-btn" aria-label="Sound on"><svg><use href="#i-sound"/></svg></button>
+      <div class="top-right">
+        <span class="drops" title="Ink drops"><svg><use href="#i-drop"/></svg><b class="dropsVal">0</b></span>
+        <button id="muteBtn" class="icon-btn" aria-label="Sound on"><svg><use href="#i-sound"/></svg></button>
+      </div>
     </header>
     <div class="stage-wrap"><canvas id="homeStage"></canvas></div>
-    <button id="drawBtn" class="btn btn-primary btn-big">Draw a monster</button>
+    <button id="advBtn" class="btn btn-primary btn-big btn-two"><span id="advLabel">Adventure</span><small id="advSub"></small></button>
+    <div class="mode-row">
+      <button id="gauntletBtn" class="btn btn-tile"><b>Gauntlet</b><small id="gauntletSub">Fight until you drop</small></button>
+      <button id="quickBtn" class="btn btn-tile"><b>Quick fight</b><small>Pick any opponent</small></button>
+    </div>
   </div>
   <div class="home-lists">
-    <div id="mineBlock">
+    <div class="list-head">
       <h2 class="list-title">Your monsters</h2>
-      <ul id="mineList" class="mlist"></ul>
+      <button id="drawBtn" class="btn btn-small">Draw new</button>
     </div>
-    <h2 class="list-title">Challengers</h2>
-    <ul id="rivalList" class="mlist"></ul>
+    <ul id="mineList" class="mlist"></ul>
+    <p class="empty" id="mineEmpty">Nothing here yet. Draw a monster and it lives here, levels up and evolves.</p>
   </div>
 </section>
 
 <section id="draw" class="screen" hidden>
   <header class="bar">
     <button id="drawClose" class="icon-btn" aria-label="Back"><svg><use href="#i-close"/></svg></button>
-    <ol class="steps" id="steps">
-      <li data-step="body"><span>1</span>Body</li>
-      <li data-step="legs"><span>2</span>Legs</li>
-      <li data-step="eyes"><span>3</span>Eyes</li>
-    </ol>
+    <span class="bar-title" id="drawTitle">New monster</span>
     <button id="undoBtn" class="icon-btn" aria-label="Undo"><svg><use href="#i-undo"/></svg></button>
   </header>
+  <div class="tools" id="tools"></div>
   <div class="pad-wrap" id="padWrap"><canvas id="drawCanvas"></canvas></div>
   <p id="drawHint" class="hint"></p>
-  <div id="tintRow" class="tints" hidden></div>
-  <button id="nextBtn" class="btn btn-primary btn-big">Next: legs</button>
+  <button id="nextBtn" class="btn btn-primary btn-big">Next: color it</button>
 </section>
 
-<section id="reveal" class="screen" hidden>
+<section id="style" class="screen" hidden>
   <header class="bar">
-    <button id="revealBack" class="icon-btn" aria-label="Back"><svg><use href="#i-back"/></svg></button>
-    <span class="bar-title" id="revealTitle">No. 001</span>
+    <button id="styleBack" class="icon-btn" aria-label="Back to drawing"><svg><use href="#i-back"/></svg></button>
+    <span class="bar-title">Color it</span>
+    <span class="drops"><svg><use href="#i-drop"/></svg><b class="dropsVal">0</b></span>
+  </header>
+  <div class="stage-wrap"><canvas id="styleStage"></canvas></div>
+  <div class="style-body">
+    <div>
+      <h3 class="sub">Ink</h3>
+      <div class="inks" id="inkRow"></div>
+      <p class="blurb" id="inkBlurb"></p>
+    </div>
+    <div>
+      <h3 class="sub">Color</h3>
+      <div class="swatches" id="tintRow"></div>
+    </div>
+    <div>
+      <h3 class="sub">Pattern</h3>
+      <div class="patterns" id="patRow"></div>
+    </div>
+  </div>
+  <button id="lifeBtn" class="btn btn-primary btn-big">Bring it to life</button>
+</section>
+
+<section id="mon" class="screen" hidden>
+  <header class="bar">
+    <button id="monBack" class="icon-btn" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+    <span class="bar-title" id="monTitle">No. 001</span>
     <button id="shareBtn" class="icon-btn" aria-label="Share"><svg><use href="#i-share"/></svg></button>
   </header>
   <div class="reveal-body">
     <div>
-      <p class="kicker" id="revealKicker" hidden>A challenger appears</p>
-      <div class="stage-wrap"><canvas id="revealStage"></canvas></div>
+      <p class="kicker" id="monKicker" hidden></p>
+      <div class="stage-wrap"><canvas id="monStage"></canvas></div>
     </div>
     <div class="card">
       <input id="nameInput" class="name-input" maxlength="16" spellcheck="false" autocomplete="off" aria-label="Name">
-      <p class="move" id="moveName"></p>
+      <div class="meta">
+        <span class="el" id="monEl"></span>
+        <span class="lvl" id="monLvl">LV 1</span>
+        <span class="xpbar" id="monXpWrap"><i><em id="monXp"></em></i></span>
+      </div>
       <div class="stats">
         <div class="stat"><span>HP</span><b id="statHp"></b><i><em id="barHp"></em></i></div>
         <div class="stat"><span>POW</span><b id="statPow"></b><i><em id="barPow"></em></i></div>
         <div class="stat"><span>SPD</span><b id="statSpd"></b><i><em id="barSpd"></em></i></div>
       </div>
+      <ul class="movelist" id="monMoves"></ul>
       <p class="why" id="whyText"></p>
       <p class="record" id="recordText"></p>
+      <button id="evolveBtn" class="btn btn-primary btn-big btn-two" hidden><span>Evolve</span><small>Draw up to 3 new parts onto it</small></button>
       <button id="fightBtn" class="btn btn-primary btn-big">Fight</button>
       <button id="deleteBtn" class="btn btn-quiet">Delete</button>
     </div>
   </div>
+</section>
+
+<section id="map" class="screen" hidden>
+  <header class="bar">
+    <button id="mapBack" class="icon-btn" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+    <span class="bar-title">Adventure</span>
+    <span class="stars-total"><svg><use href="#i-star"/></svg><b id="starsTotal">0</b>/75</span>
+  </header>
+  <div id="chapters" class="chapters"></div>
 </section>
 
 <section id="pick" class="screen" hidden>
@@ -93,6 +139,7 @@
     <span class="bar-title" id="pickTitle">Pick an opponent</span>
     <span class="icon-btn" aria-hidden="true"></span>
   </header>
+  <p class="pick-note" id="pickNote" hidden></p>
   <ul id="pickList" class="mlist"></ul>
 </section>
 
@@ -100,23 +147,30 @@
   <header class="bar battle-bar">
     <button id="battleQuit" class="icon-btn" aria-label="Leave fight"><svg><use href="#i-close"/></svg></button>
     <div class="plates">
-      <div class="plate" id="plateA"><span class="pname"></span><span class="php"></span><i><em></em></i></div>
-      <div class="plate right" id="plateB"><span class="pname"></span><span class="php"></span><i><em></em></i></div>
+      <div class="plate" id="plateA"><span class="pname"></span><span class="php"></span><i><em></em></i><span class="ptags"></span></div>
+      <div class="plate right" id="plateB"><span class="pname"></span><span class="php"></span><i><em></em></i><span class="ptags"></span></div>
     </div>
   </header>
+  <p class="round-tag" id="roundTag" hidden></p>
   <div class="arena-wrap" id="arenaWrap"><canvas id="arena"></canvas><div id="stamp" class="stamp"></div></div>
   <div class="action" id="actionPad">
     <p id="actionText" class="action-text">Get ready</p>
-    <div class="meter" id="meter"><div class="zone good" id="zoneGood"></div><div class="zone crit" id="zoneCrit"></div><div class="needle" id="needle"></div></div>
-    <button id="actionBtn" class="btn btn-primary btn-big" tabindex="-1">Strike</button>
+    <div class="movegrid" id="moveGrid" hidden></div>
+    <div class="meter-wrap" id="meterWrap">
+      <div class="meter" id="meter"><div class="zone good" id="zoneGood"></div><div class="zone crit" id="zoneCrit"></div><div class="needle" id="needle"></div></div>
+      <button id="actionBtn" class="btn btn-primary btn-big" tabindex="-1">Strike</button>
+    </div>
   </div>
   <div class="result" id="result" hidden>
     <p class="result-title" id="resultTitle"></p>
+    <div class="result-stars" id="resultStars"></div>
     <p class="result-sub" id="resultSub"></p>
-    <button id="rematchBtn" class="btn btn-primary btn-big">Rematch</button>
+    <div class="xpline" id="xpLine"><span id="resLvl">LV 1</span><i><em id="resXp"></em></i><span id="resXpText"></span></div>
+    <p class="rewards" id="resDrops"></p>
+    <button id="resPrimary" class="btn btn-primary btn-big">Next</button>
     <div class="result-row">
-      <button id="otherBtn" class="btn btn-small">New opponent</button>
-      <button id="resultHome" class="btn btn-small">Done</button>
+      <button id="resSecondary" class="btn btn-small">Rematch</button>
+      <button id="resHome" class="btn btn-small">Done</button>
     </div>
   </div>
 </section>

@@ -122,5 +122,34 @@ export function sfx(name, power = 1) {
       [392, 330, 262].forEach((f, i) => tone(t + i * 0.16, { type: 'triangle', from: f, to: f * 0.97, dur: 0.3, peak: 0.2 }));
       break;
     case 'stamp': noiseHit(t, { freq: 700, peak: 0.35, dur: 0.06 }); tone(t, { from: 220, to: 120, dur: 0.08, peak: 0.3 }); break;
+    case 'select': tone(t, { type: 'triangle', from: 660, to: 990, dur: 0.07, peak: 0.16 }); break;
+    case 'heal':
+      [523, 659, 784].forEach((f, i) => tone(t + i * 0.07, { type: 'sine', from: f, to: f * 1.02, dur: 0.18, peak: 0.18 }));
+      break;
+    case 'bleed': tone(t, { type: 'sine', from: 700, to: 260, dur: 0.16, peak: 0.16 }); noiseHit(t, { type: 'bandpass', freq: 900, q: 4, peak: 0.12, dur: 0.1 }); break;
+    case 'stun':
+      for (let i = 0; i < 4; i++) tone(t + i * 0.06, { type: 'square', from: 1200 + (i % 2) * 300, dur: 0.05, peak: 0.07 });
+      break;
+    case 'fly': {
+      const f = noiseHit(t, { type: 'bandpass', freq: 400, q: 2, peak: 0.3, dur: 0.4 });
+      f.frequency.exponentialRampToValueAtTime(1800, t + 0.35);
+      tone(t, { type: 'triangle', from: 300, to: 900, dur: 0.3, peak: 0.12 });
+      break;
+    }
+    case 'glare': tone(t, { type: 'sawtooth', from: 110, to: 90, dur: 0.5, peak: 0.12 }); tone(t, { type: 'sine', from: 1400, to: 1300, dur: 0.4, peak: 0.05 }); break;
+    case 'miss': noiseHit(t, { type: 'highpass', freq: 2000, peak: 0.18, dur: 0.18 }); tone(t, { type: 'triangle', from: 500, to: 300, dur: 0.15, peak: 0.1 }); break;
+    case 'drop': tone(t, { type: 'sine', from: 1500, to: 2400, dur: 0.06, peak: 0.12 }); tone(t + 0.05, { type: 'sine', from: 2000, to: 2600, dur: 0.08, peak: 0.08 }); break;
+    case 'levelup':
+      [392, 523, 659, 784, 1047].forEach((f, i) => tone(t + i * 0.08, { type: 'square', from: f, dur: 0.14, peak: 0.08 }));
+      [523, 1047].forEach((f) => tone(t + 0.42, { type: 'triangle', from: f, dur: 0.5, peak: 0.16 }));
+      break;
+    case 'evolve': {
+      const f = noiseHit(t, { type: 'bandpass', freq: 200, q: 1.5, peak: 0.3, dur: 1.2 });
+      f.frequency.exponentialRampToValueAtTime(4000, t + 1.1);
+      [262, 330, 392, 523, 659, 784, 1047].forEach((fr, i) => tone(t + 0.9 + i * 0.05, { type: 'triangle', from: fr, dur: 0.4, peak: 0.12 }));
+      break;
+    }
+    case 'buy': [880, 1320].forEach((f, i) => tone(t + i * 0.08, { type: 'square', from: f, dur: 0.1, peak: 0.08 })); break;
+    case 'deny': tone(t, { type: 'square', from: 180, to: 150, dur: 0.15, peak: 0.12 }); break;
   }
 }
