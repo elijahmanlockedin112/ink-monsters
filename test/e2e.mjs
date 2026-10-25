@@ -174,6 +174,16 @@ try {
   // reload keeps it
   await go(BASE);
   ok((await js('window.__ink.store.mine.length')) === 1, 'monster survives a reload');
+  // Share copies a link to the public site, whichever copy you're playing on
+  await js(`window.__copied = null; Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (t) => { window.__copied = t; } }, configurable: true }); 1`);
+  await tap('#mineList .row .row-text');
+  await tap('#shareBtn');
+  await sleep(400);
+  const copied = await js('window.__copied');
+  const expectBase = BASE.includes('github.io') ? BASE : 'https://elijahmanlockedin112.github.io/ink-monsters/';
+  ok(!!copied && copied.startsWith(expectBase + '#m='), `Share copies a public link (${(copied || '').slice(0, 60)}...)`);
+  await tap('#revealBack');
   await tap('#mineList .row .btn');
   ok((await js('window.__ink.screen')) === 'pick', 'Fight on your monster opens the opponent list');
   await tap('#pickList .row:nth-child(2) .btn'); // Prickle

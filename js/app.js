@@ -895,9 +895,12 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
 }
 
+// links always point at the public copy, so a monster shared from the PC or tailnet still opens for anyone
+const PUBLIC_URL = 'https://elijahmanlockedin112.github.io/ink-monsters/';
 async function share(d) {
   const code = await encodeMonster(d);
-  const url = `${location.origin}${location.pathname}#m=${code}`;
+  const base = location.hostname.endsWith('github.io') ? `${location.origin}${location.pathname}` : PUBLIC_URL;
+  const url = `${base}#m=${code}`;
   const text = `${d.name} wants a fight. Draw a monster that can beat it.`;
   if (navigator.share) {
     try { await navigator.share({ title: 'Ink Monsters', text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }

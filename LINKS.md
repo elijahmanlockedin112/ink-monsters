@@ -7,9 +7,10 @@
 | Start after a reboot | double-click `C:\Users\elija\Downloads\Coding Projects\ink-monsters\start-ink-monsters.cmd` |
 | Server log | `C:\Users\elija\Downloads\Coding Projects\ink-monsters\.claude\serve-47905.log` |
 | Test | `node test/e2e.mjs` (server running; real touch, mouse and keyboard in headless Chrome; screenshots in `test/shots`). Add a URL to test the Tailscale copy. |
-| Repo | local git only, no remote |
+| Public (anyone, E included) | https://elijahmanlockedin112.github.io/ink-monsters/ |
+| Repo | https://github.com/elijahmanlockedin112/ink-monsters (public; Pages deploys from `main`) |
 
-Share links (`#m=...`) carry the whole drawing, so they only open for people who can reach the URL. The Tailscale URL works on your own devices. To send one to E, it needs a public host (GitHub Pages works, since it's all static files).
+Share links (`#m=...`) carry the whole drawing and always point at the public URL, so they open for anyone. Each copy (PC, Tailscale, public) keeps its own saved monsters. Pushing to `main` updates the public site within a minute, so don't push half-finished work.
 
 Start command (PowerShell):
 
